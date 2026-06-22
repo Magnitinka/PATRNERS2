@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Совместимость пары – с подписями эмоций</title>
+    <title>Совместимость пары – полный расчёт СЗ с ДА2</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -143,6 +143,9 @@
             display: block;
             line-height: 1.2;
         }
+        .cz-group {
+            background: #faf7f0;
+        }
         @media print {
             body { max-width: 100%; padding: 0.2in; font-size: 16px; }
             .no-print { display: none !important; }
@@ -192,7 +195,7 @@
 </div>
 
 <script>
-    // ----- ВСЕ ФУНКЦИИ БЕЗ ИЗМЕНЕНИЙ ИЗ ИСХОДНОГО ФАЙЛА -----
+    // ----- Базовые функции (из исходного файла) -----
     function toArcane(num) {
         if (num === 0) return 22;
         let r = num;
@@ -261,12 +264,14 @@
         const mMa = man.ma, wMa = woman.ma;
         const mGa = man.ga, wGa = woman.ga;
 
+        // Общие арканы этапов (крыши)
         const da3 = toArcane(mMain + wMain);
         let da3_2 = null;
         if (mAdd !== null && wAdd !== null) da3_2 = toArcane(mAdd + wAdd);
         const ma3 = toArcane(mMa + wMa);
         const ga3 = toArcane(mGa + wGa);
 
+        // Эмоции и нерешаемые
         const emMeetMan = toArcane(mMain + (mMain + wMain));
         const emMeetWoman = toArcane(wMain + (mMain + wMain));
         const unsolvedMeet = toArcane(Math.abs(emMeetMan - emMeetWoman));
@@ -287,11 +292,31 @@
         const emBreakWoman = toArcane(wGa + (mGa + wGa));
         const unsolvedBreak = toArcane(Math.abs(emBreakMan - emBreakWoman));
 
-        const czCommon = toArcane(man.main.cz + woman.main.cz);
+        // ---- Социальные задачи (СЗ) ----
+        // Основные (по основному ДА)
+        const czManMain = man.main.cz;
+        const czWomanMain = woman.main.cz;
+        const czCommonMain = toArcane(czManMain + czWomanMain);
+        const cz1_2Main = toArcane(czManMain + czCommonMain);
+        const cz2_1Main = toArcane(czWomanMain + czCommonMain);
+        const cz4Main = toArcane(Math.abs(cz1_2Main - cz2_1Main));
+
+        // Дополнительные (по дополнительному ДА, если есть у обоих)
+        let czCommonAdd = null, cz1_2Add = null, cz2_1Add = null, cz4Add = null;
+        if (man.secondary && woman.secondary) {
+            const czManAdd = man.secondary.cz;
+            const czWomanAdd = woman.secondary.cz;
+            czCommonAdd = toArcane(czManAdd + czWomanAdd);
+            cz1_2Add = toArcane(czManAdd + czCommonAdd);
+            cz2_1Add = toArcane(czWomanAdd + czCommonAdd);
+            cz4Add = toArcane(Math.abs(cz1_2Add - cz2_1Add));
+        }
+
+        // ТП
         const tpCommon = toArcane(man.main.tp + woman.main.tp);
-        const unsolvedCZ = toArcane(Math.abs(man.main.cz - woman.main.cz));
         const unsolvedTP = toArcane(Math.abs(man.main.tp - woman.main.tp));
 
+        // ОПВ
         const opv1Man = man.main.opv, opv2Man = man.secondary?.opv ?? null, opv3Man = man.kbCommon;
         const opv1Woman = woman.main.opv, opv2Woman = woman.secondary?.opv ?? null, opv3Woman = woman.kbCommon;
 
@@ -305,7 +330,9 @@
             emMeetMan2, emMeetWoman2, unsolvedMeet2,
             emLiveMan, emLiveWoman, unsolvedLive,
             emBreakMan, emBreakWoman, unsolvedBreak,
-            czCommon, tpCommon, unsolvedCZ, unsolvedTP,
+            czCommonMain, cz1_2Main, cz2_1Main, cz4Main,
+            czCommonAdd, cz1_2Add, cz2_1Add, cz4Add,
+            tpCommon, unsolvedTP,
             opv1Man, opv2Man, opv3Man, opv1Woman, opv2Woman, opv3Woman,
             opvCommon1, opvCommon2, opvCommon3,
             man, woman
@@ -314,12 +341,10 @@
 
     function getAllKarmicMarkers(man, woman, compat) {
         const markers = [];
-        const mMain = man.mainNumber, wMain = woman.mainNumber;
-        const mMa = man.ma, wMa = woman.ma;
         const mKu3 = man.main.ku3, wKu3 = woman.main.ku3;
         const da3 = compat.da3;
         const emWoman = compat.emMeetWoman, emMan = compat.emMeetMan;
-        const czCommon = compat.czCommon;
+        const czCommon = compat.czCommonMain;
         const czMan = man.main.cz, czWoman = woman.main.cz;
         const opvMan = [compat.opv1Man, compat.opv2Man, compat.opv3Man].filter(v => v !== null);
         const opvWoman = [compat.opv1Woman, compat.opv2Woman, compat.opv3Woman].filter(v => v !== null);
@@ -364,13 +389,14 @@
     }
 
     function isKarmicRow(rowName, compat, man, woman) {
-        const czCommon = compat.czCommon;
+        const czCommon = compat.czCommonMain;
         const da3 = compat.da3;
         const mKu3 = man.main.ku3, wKu3 = woman.main.ku3;
         const opvMan = [compat.opv1Man, compat.opv2Man, compat.opv3Man].filter(v => v !== null);
         const opvWoman = [compat.opv1Woman, compat.opv2Woman, compat.opv3Woman].filter(v => v !== null);
         const mKb = man.kbCommon, wKb = woman.kbCommon;
-        if (rowName === 'czCommon') return opvMan.includes(czCommon) || opvWoman.includes(czCommon) || mKu3 === czCommon || wKu3 === czCommon || mKb === czCommon || wKb === czCommon;
+        if (rowName === 'czCommonMain') return opvMan.includes(czCommon) || opvWoman.includes(czCommon) || mKu3 === czCommon || wKu3 === czCommon || mKb === czCommon || wKb === czCommon;
+        if (rowName === 'czCommonAdd') return false; // доп. пока не маркер
         if (rowName === 'da3') return mKu3 === da3 || wKu3 === da3;
         if (rowName === 'opvCommon1') return compat.opv1Man === czCommon || compat.opv1Woman === czCommon;
         if (rowName === 'opvCommon2') return compat.opv2Man !== null && compat.opv2Woman !== null && (compat.opv2Man === czCommon || compat.opv2Woman === czCommon);
@@ -456,7 +482,14 @@
         <table>
             <tr><th colspan="4">Общие и нерешаемые показатели</th></tr>
             <tr><th>Показатель</th><th>Общие</th><th>Нерешаемые</th><th>Формула</th></tr>
-            <tr${isKarmicRow('czCommon', compat, man, woman) ? ' class="karmic-row"' : ''}><td>СЗ (социальная задача)<td>${compat.czCommon} (${nameA(compat.czCommon)})<td class="highlight-unsolved">${compat.unsolvedCZ} (${nameA(compat.unsolvedCZ)})<td>СЗМ+СЗЖ, |СЗМ-СЗЖ|</tr>
+            <tr${isKarmicRow('czCommonMain', compat, man, woman) ? ' class="karmic-row"' : ''}><td>СЗ3 (осн.) – общая задача<td>${compat.czCommonMain} (${nameA(compat.czCommonMain)})<td>—<td>СЗМ(осн.)+СЗЖ(осн.)</tr>
+            ${compat.czCommonAdd !== null ? `<tr><td>СЗ3 (доп.) – общая задача<td>${compat.czCommonAdd} (${nameA(compat.czCommonAdd)})<td>—<td>СЗМ(доп.)+СЗЖ(доп.)</tr>` : ''}
+            <tr><td>СЗ1-2 (осн.) – вклад мужчины<td>${compat.cz1_2Main} (${nameA(compat.cz1_2Main)})<td>—<td>СЗМ(осн.)+СЗ3(осн.)</tr>
+            ${compat.cz1_2Add !== null ? `<tr><td>СЗ1-2 (доп.) – вклад мужчины<td>${compat.cz1_2Add} (${nameA(compat.cz1_2Add)})<td>—<td>СЗМ(доп.)+СЗ3(доп.)</tr>` : ''}
+            <tr><td>СЗ2-1 (осн.) – вклад женщины<td>${compat.cz2_1Main} (${nameA(compat.cz2_1Main)})<td>—<td>СЗЖ(осн.)+СЗ3(осн.)</tr>
+            ${compat.cz2_1Add !== null ? `<tr><td>СЗ2-1 (доп.) – вклад женщины<td>${compat.cz2_1Add} (${nameA(compat.cz2_1Add)})<td>—<td>СЗЖ(доп.)+СЗ3(доп.)</tr>` : ''}
+            <tr><td>СЗ4 (осн.) – нерешаемое<td class="highlight-unsolved">${compat.cz4Main} (${nameA(compat.cz4Main)})<td>—<td>|СЗ1-2(осн.) - СЗ2-1(осн.)|</tr>
+            ${compat.cz4Add !== null ? `<tr><td>СЗ4 (доп.) – нерешаемое<td class="highlight-unsolved">${compat.cz4Add} (${nameA(compat.cz4Add)})<td>—<td>|СЗ1-2(доп.) - СЗ2-1(доп.)|</tr>` : ''}
             <tr${isKarmicRow('tpCommon', compat, man, woman) ? ' class="karmic-row"' : ''}><td>ТП (точка препятствий)<td>${compat.tpCommon} (${nameA(compat.tpCommon)})<td class="highlight-unsolved">${compat.unsolvedTP} (${nameA(compat.unsolvedTP)})<td>ТПМ+ТПЖ, |ТПМ-ТПЖ|</tr>
             <tr${isKarmicRow('opvCommon1', compat, man, woman) ? ' class="karmic-row"' : ''}><td>ОПВ1<td>${compat.opvCommon1} (${nameA(compat.opvCommon1)})<td class="highlight-unsolved">—<td>ОПВ1М+ОПВ1Ж</tr>
             ${compat.opvCommon2 !== null ? `<tr${isKarmicRow('opvCommon2', compat, man, woman) ? ' class="karmic-row"' : ''}><td>ОПВ2<td>${compat.opvCommon2} (${nameA(compat.opvCommon2)})<td class="highlight-unsolved">—<td>ОПВ2М+ОПВ2Ж</tr>` : ''}
